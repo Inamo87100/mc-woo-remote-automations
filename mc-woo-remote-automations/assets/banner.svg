@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 772 250" width="772" height="250">
+  <defs>
+    <linearGradient id="bannerBg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#31006F;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#4a1590;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a003a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentLine2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FDB927;stop-opacity:0" />
+      <stop offset="30%" style="stop-color:#FDB927;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#FDB927;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FDB927;stop-opacity:0" />
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="772" height="250" fill="url(#bannerBg2)" />
+  <!-- Decorative circles -->
+  <circle cx="700" cy="30" r="120" fill="#ffffff" opacity="0.03" />
+  <circle cx="720" cy="200" r="80" fill="#FDB927" opacity="0.04" />
+  <circle cx="50" cy="220" r="100" fill="#ffffff" opacity="0.03" />
+  <!-- Accent line bottom -->
+  <rect x="0" y="240" width="772" height="4" fill="url(#accentLine2)" />
+  <!-- Left icon - gear / automation -->
+  <circle cx="80" cy="125" r="50" fill="#4a1590" stroke="#FDB927" stroke-width="2" opacity="0.9"/>
+  <circle cx="80" cy="125" r="20" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.9"/>
+  <circle cx="80" cy="125" r="8" fill="#FDB927" />
+  <rect x="77" y="96" width="6" height="10" rx="2" fill="#ffffff" opacity="0.85"/>
+  <rect x="77" y="139" width="6" height="10" rx="2" fill="#ffffff" opacity="0.85"/>
+  <rect x="51" y="122" width="10" height="6" rx="2" fill="#ffffff" opacity="0.85"/>
+  <rect x="99" y="122" width="10" height="6" rx="2" fill="#ffffff" opacity="0.85"/>
+  <!-- Flow arrows -->
+  <path d="M62 107 L50 95 M56 95 L50 95 L50 101" stroke="#FDB927" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M98 107 L110 95 M104 95 L110 95 L110 101" stroke="#FDB927" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Plugin name -->
+  <text x="155" y="90" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#ffffff" letter-spacing="1">MC-Woo Remote</text>
+  <text x="155" y="132" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#FDB927" letter-spacing="1">Automations</text>
+  <!-- Accent underline -->
+  <rect x="155" y="140" width="370" height="3" fill="#FDB927" rx="1.5" />
+  <!-- Tagline -->
+  <text x="155" y="168" font-family="Arial, sans-serif" font-size="16" fill="#ccaaff">Automate WooCommerce order actions to remote WordPress sites</text>
+  <!-- Feature bullets -->
+  <circle cx="161" cy="193" r="3" fill="#FDB927"/>
+  <text x="172" y="198" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" opacity="0.85">Trigger automations on order status changes</text>
+  <circle cx="161" cy="214" r="3" fill="#FDB927"/>
+  <text x="172" y="219" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" opacity="0.85">Remote user creation &amp; role assignment</text>
+  <circle cx="161" cy="235" r="3" fill="#FDB927"/>
+  <text x="172" y="240" font-family="Arial, sans-serif" font-size="13" fill="#ffffff" opacity="0.85">Detailed execution logs &amp; monitoring</text>
+  <!-- Right side branding -->
+  <text x="692" y="225" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#FDB927" text-anchor="end" opacity="0.9">mambacoding.com</text>
+</svg>

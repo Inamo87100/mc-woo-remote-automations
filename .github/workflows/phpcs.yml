@@ -1,0 +1,43 @@
+name: WordPress Coding Standards
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main, master ]
+
+jobs:
+  phpcs:
+    name: PHP CodeSniffer
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer, phpcs
+
+      - name: Install WordPress Coding Standards
+        run: |
+          composer global require squizlabs/php_codesniffer
+          composer global require wp-coding-standards/wpcs
+          phpcs --config-set installed_paths $(composer global config home)/vendor/wp-coding-standards/wpcs
+
+      - name: Run PHPCS on mc-remote-api
+        run: |
+          phpcs --standard=mc-remote-api/.phpcs.xml.dist \
+                mc-remote-api/mc-remote-api.php \
+                mc-remote-api/includes/
+
+      - name: Run PHPCS on mc-woo-remote-automations
+        run: |
+          phpcs --standard=mc-woo-remote-automations/.phpcs.xml.dist \
+                mc-woo-remote-automations/mc-woo-remote-automations.php \
+                mc-woo-remote-automations/includes/ \
+                mc-woo-remote-automations/admin/
