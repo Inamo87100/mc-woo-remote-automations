@@ -1,0 +1,164 @@
+name: Deploy to WordPress.org SVN
+
+on:
+  repository_dispatch:
+    types: [deploy-to-svn]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g. 1.1.3)'
+        required: true
+      plugin:
+        description: 'Plugin to deploy (mc-remote-api or mc-woo-remote-automations)'
+        required: true
+        default: 'mc-woo-remote-automations'
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-mc-woo-remote-automations:
+    name: Deploy mc-woo-remote-automations to SVN
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' && github.event.inputs.plugin == 'mc-woo-remote-automations' ||
+      github.event_name == 'repository_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install SVN
+        run: sudo apt-get install -y subversion
+
+      - name: Set version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "VERSION=${{ github.event.client_payload.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout WordPress.org SVN
+        env:
+          SVN_USERNAME: ${{ secrets.WP_ORG_SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.WP_ORG_SVN_PASSWORD }}
+        run: |
+          svn checkout \
+            "https://plugins.svn.wordpress.org/mc-woo-remote-automations" \
+            /tmp/svn-mc-woo \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --no-auth-cache \
+            --depth immediates
+
+      - name: Sync trunk
+        run: |
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='tests' \
+            --exclude='node_modules' \
+            --exclude='.gitignore' \
+            --exclude='.svn-deploy' \
+            mc-woo-remote-automations/ /tmp/svn-mc-woo/trunk/
+
+      - name: Create SVN tag
+        env:
+          SVN_USERNAME: ${{ secrets.WP_ORG_SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.WP_ORG_SVN_PASSWORD }}
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          svn copy \
+            "https://plugins.svn.wordpress.org/mc-woo-remote-automations/trunk" \
+            "https://plugins.svn.wordpress.org/mc-woo-remote-automations/tags/${VERSION}" \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --no-auth-cache \
+            -m "Tagging version ${VERSION}"
+
+      - name: Commit to SVN trunk
+        env:
+          SVN_USERNAME: ${{ secrets.WP_ORG_SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.WP_ORG_SVN_PASSWORD }}
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          cd /tmp/svn-mc-woo
+          svn add --force trunk/
+          svn status | grep '^!' | awk '{print $2}' | xargs -r svn delete
+          svn commit \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --no-auth-cache \
+            -m "Deploy version ${VERSION}"
+
+  deploy-mc-remote-api:
+    name: Deploy mc-remote-api to SVN
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' && github.event.inputs.plugin == 'mc-remote-api'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install SVN
+        run: sudo apt-get install -y subversion
+
+      - name: Set version
+        id: version
+        run: echo "VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout WordPress.org SVN
+        env:
+          SVN_USERNAME: ${{ secrets.WP_ORG_SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.WP_ORG_SVN_PASSWORD }}
+        run: |
+          svn checkout \
+            "https://plugins.svn.wordpress.org/mc-remote-api" \
+            /tmp/svn-mc-remote-api \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --no-auth-cache \
+            --depth immediates
+
+      - name: Sync trunk
+        run: |
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='tests' \
+            --exclude='node_modules' \
+            --exclude='.gitignore' \
+            --exclude='.svn-deploy' \
+            mc-remote-api/ /tmp/svn-mc-remote-api/trunk/
+
+      - name: Create SVN tag
+        env:
+          SVN_USERNAME: ${{ secrets.WP_ORG_SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.WP_ORG_SVN_PASSWORD }}
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          svn copy \
+            "https://plugins.svn.wordpress.org/mc-remote-api/trunk" \
+            "https://plugins.svn.wordpress.org/mc-remote-api/tags/${VERSION}" \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --no-auth-cache \
+            -m "Tagging version ${VERSION}"
+
+      - name: Commit to SVN trunk
+        env:
+          SVN_USERNAME: ${{ secrets.WP_ORG_SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.WP_ORG_SVN_PASSWORD }}
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          cd /tmp/svn-mc-remote-api
+          svn add --force trunk/
+          svn status | grep '^!' | awk '{print $2}' | xargs -r svn delete
+          svn commit \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --no-auth-cache \
+            -m "Deploy version ${VERSION}"

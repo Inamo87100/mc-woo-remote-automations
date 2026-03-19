@@ -1,0 +1,63 @@
+name: WordPress.org Sync Status
+
+on:
+  schedule:
+    # Run every Monday at 08:00 UTC
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-sync-status:
+    name: Check WordPress.org Plugin Status
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check mc-woo-remote-automations on WordPress.org
+        id: check_woo
+        run: |
+          SLUG="mc-woo-remote-automations"
+          RESPONSE=$(curl -s "https://api.wordpress.org/plugins/info/1.2/?action=plugin_information&request[slug]=${SLUG}" || echo '{}')
+          WP_VERSION=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('version','not-found'))" 2>/dev/null || echo "not-found")
+          LOCAL_VERSION=$(grep "Version:" mc-woo-remote-automations/mc-woo-remote-automations.php | awk '{print $NF}')
+          echo "WP_ORG_VERSION=$WP_VERSION" >> "$GITHUB_OUTPUT"
+          echo "LOCAL_VERSION=$LOCAL_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Plugin: $SLUG"
+          echo "  WordPress.org version : $WP_VERSION"
+          echo "  Local version         : $LOCAL_VERSION"
+
+      - name: Check mc-remote-api on WordPress.org
+        id: check_api
+        run: |
+          SLUG="mc-remote-api"
+          RESPONSE=$(curl -s "https://api.wordpress.org/plugins/info/1.2/?action=plugin_information&request[slug]=${SLUG}" || echo '{}')
+          WP_VERSION=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('version','not-found'))" 2>/dev/null || echo "not-found")
+          LOCAL_VERSION=$(grep "Version:" mc-remote-api/mc-remote-api.php | awk '{print $NF}')
+          echo "WP_ORG_VERSION=$WP_VERSION" >> "$GITHUB_OUTPUT"
+          echo "LOCAL_VERSION=$LOCAL_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Plugin: $SLUG"
+          echo "  WordPress.org version : $WP_VERSION"
+          echo "  Local version         : $LOCAL_VERSION"
+
+      - name: Report sync status
+        run: |
+          echo "## Sync Status Report" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Plugin | Local Version | WordPress.org Version | In Sync |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------|--------------|----------------------|---------|" >> "$GITHUB_STEP_SUMMARY"
+
+          WOO_LOCAL="${{ steps.check_woo.outputs.LOCAL_VERSION }}"
+          WOO_WP="${{ steps.check_woo.outputs.WP_ORG_VERSION }}"
+          WOO_SYNC=$([ "$WOO_LOCAL" = "$WOO_WP" ] && echo "✅" || echo "❌")
+
+          API_LOCAL="${{ steps.check_api.outputs.LOCAL_VERSION }}"
+          API_WP="${{ steps.check_api.outputs.WP_ORG_VERSION }}"
+          API_SYNC=$([ "$API_LOCAL" = "$API_WP" ] && echo "✅" || echo "❌")
+
+          echo "| mc-woo-remote-automations | $WOO_LOCAL | $WOO_WP | $WOO_SYNC |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| mc-remote-api | $API_LOCAL | $API_WP | $API_SYNC |" >> "$GITHUB_STEP_SUMMARY"

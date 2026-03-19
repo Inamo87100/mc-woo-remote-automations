@@ -1,0 +1,21 @@
+# SVN Deployment Configuration — mc-woo-remote-automations
+
+# WordPress.org SVN repository URL
+SVN_URL=https://plugins.svn.wordpress.org/mc-woo-remote-automations
+
+# Plugin slug (must match WordPress.org slug)
+PLUGIN_SLUG=mc-woo-remote-automations
+
+# Local plugin directory to sync
+PLUGIN_DIR=mc-woo-remote-automations
+
+# Main plugin file
+MAIN_FILE=mc-woo-remote-automations.php
+
+# Files and directories to exclude from SVN deployment
+# (colon-separated)
+EXCLUDE_PATHS=.git:.github:tests:node_modules:.gitignore:.svn-deploy:.phpcs.xml.dist:RELEASE_NOTES.md:RELEASE_TEMPLATE.md
+
+# Assets directory (plugin icon, banner, screenshots)
+# These are synced to the SVN /assets/ directory, NOT /trunk/
+ASSETS_DIR=assets

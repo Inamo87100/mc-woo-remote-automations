@@ -1,0 +1,21 @@
+# SVN Deployment Configuration — mc-remote-api
+
+# WordPress.org SVN repository URL
+SVN_URL=https://plugins.svn.wordpress.org/mc-remote-api
+
+# Plugin slug (must match WordPress.org slug)
+PLUGIN_SLUG=mc-remote-api
+
+# Local plugin directory to sync
+PLUGIN_DIR=mc-remote-api
+
+# Main plugin file
+MAIN_FILE=mc-remote-api.php
+
+# Files and directories to exclude from SVN deployment
+# (colon-separated)
+EXCLUDE_PATHS=.git:.github:tests:node_modules:.gitignore:.svn-deploy:.phpcs.xml.dist:RELEASE_NOTES.md:RELEASE_TEMPLATE.md
+
+# Assets directory (plugin icon, banner, screenshots)
+# These are synced to the SVN /assets/ directory, NOT /trunk/
+ASSETS_DIR=assets
