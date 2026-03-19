@@ -21,13 +21,12 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
-          tools: composer, phpcs
+          tools: composer
 
       - name: Install WordPress Coding Standards
         run: |
-          composer global require squizlabs/php_codesniffer
-          composer global require wp-coding-standards/wpcs
-          phpcs --config-set installed_paths $(composer global config home)/vendor/wp-coding-standards/wpcs
+          composer global require squizlabs/php_codesniffer:"^3.13" dealerdirect/phpcodesniffer-composer-installer wp-coding-standards/wpcs:"^3.1"
+          echo "$(composer global config bin-dir)" >> "$GITHUB_PATH"
 
       - name: Run PHPCS on mc-remote-api
         run: |
