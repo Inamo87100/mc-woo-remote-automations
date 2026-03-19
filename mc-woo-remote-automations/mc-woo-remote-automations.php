@@ -17,7 +17,7 @@
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-exit;
+	exit;
 }
 
 // Plugin version.
@@ -34,10 +34,10 @@ define( 'MC_WOO_REMOTE_FILE', __FILE__ );
 
 // Load translations.
 add_action(
-'plugins_loaded',
-function () {
-load_plugin_textdomain( 'mc-woo-remote-automations', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
-}
+	'plugins_loaded',
+	function () {
+		load_plugin_textdomain( 'mc-woo-remote-automations', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+	}
 );
 
 // Load includes.
