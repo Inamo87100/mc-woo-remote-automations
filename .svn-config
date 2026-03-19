@@ -1,0 +1,46 @@
+# SVN Configuration
+# WordPress.org Subversion repository settings for both plugins
+
+# ─── mc-woo-remote-automations ───────────────────────────────────────────────
+[mc-woo-remote-automations]
+SVN_URL=https://plugins.svn.wordpress.org/mc-woo-remote-automations
+PLUGIN_SLUG=mc-woo-remote-automations
+PLUGIN_DIR=mc-woo-remote-automations
+MAIN_FILE=mc-woo-remote-automations.php
+
+# SVN paths
+TRUNK_PATH=trunk
+BRANCHES_PATH=branches
+TAGS_PATH=tags
+
+# Assets (plugin icon, banner, screenshots) stored separately
+ASSETS_PATH=assets
+
+# Deployment exclusions (colon-separated)
+EXCLUDE_PATHS=.git:.github:tests:node_modules:.gitignore:.svn-deploy:.phpcs.xml.dist
+
+# ─── mc-remote-api ────────────────────────────────────────────────────────────
+[mc-remote-api]
+SVN_URL=https://plugins.svn.wordpress.org/mc-remote-api
+PLUGIN_SLUG=mc-remote-api
+PLUGIN_DIR=mc-remote-api
+MAIN_FILE=mc-remote-api.php
+
+TRUNK_PATH=trunk
+BRANCHES_PATH=branches
+TAGS_PATH=tags
+ASSETS_PATH=assets
+
+EXCLUDE_PATHS=.git:.github:tests:node_modules:.gitignore:.svn-deploy:.phpcs.xml.dist
+
+# ─── Authentication ────────────────────────────────────────────────────────────
+# Store credentials in environment variables or GitHub Secrets — NEVER hardcode here.
+# Required secrets:
+#   WP_ORG_SVN_USERNAME  – Your WordPress.org username
+#   WP_ORG_SVN_PASSWORD  – Your WordPress.org password / application password
+
+# ─── SVN directory structure ───────────────────────────────────────────────────
+# trunk/   – Active development; mirrors HEAD of each plugin directory
+# branches/  – Long-lived branches (e.g. branches/1.x-maintenance)
+# tags/    – Immutable version snapshots (e.g. tags/1.1.3)
+# assets/  – Marketplace images (icon-128x128.png, banner-772x250.png, screenshot-*.png)
