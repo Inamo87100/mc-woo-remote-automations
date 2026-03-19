@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<phpunit
+	bootstrap="tests/bootstrap.php"
+	backupGlobals="false"
+	colors="true"
+	verbose="true"
+>
+	<testsuites>
+		<testsuite name="unit">
+			<directory>mc-remote-api/tests</directory>
+			<directory>mc-woo-remote-automations/tests</directory>
+		</testsuite>
+		<testsuite name="integration">
+			<directory>tests/integration</directory>
+		</testsuite>
+	</testsuites>
+
+	<coverage processUncoveredFiles="true">
+		<include>
+			<directory suffix=".php">mc-remote-api/includes</directory>
+			<directory suffix=".php">mc-woo-remote-automations/includes</directory>
+		</include>
+		<exclude>
+			<directory suffix=".php">mc-remote-api/tests</directory>
+			<directory suffix=".php">mc-woo-remote-automations/tests</directory>
+			<directory suffix=".php">tests</directory>
+			<directory suffix=".php">vendor</directory>
+		</exclude>
+	</coverage>
+</phpunit>

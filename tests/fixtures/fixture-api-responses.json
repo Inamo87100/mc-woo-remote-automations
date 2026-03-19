@@ -1,0 +1,63 @@
+{
+	"create_user": {
+		"success_created": {
+			"success": true,
+			"code": "user_created",
+			"user_id": 42,
+			"message": "User created successfully."
+		},
+		"success_exists": {
+			"success": true,
+			"code": "user_exists",
+			"user_id": 7,
+			"message": "User already exists."
+		}
+	},
+	"assign_role": {
+		"success": {
+			"success": true,
+			"code": "role_assigned",
+			"role": "editor",
+			"message": "Role assigned successfully."
+		},
+		"error_user_not_found": {
+			"success": false,
+			"code": "user_not_found",
+			"message": "No user found with that email address."
+		},
+		"error_invalid_role": {
+			"success": false,
+			"code": "invalid_role",
+			"message": "The requested role does not exist."
+		}
+	},
+	"ping": {
+		"success": {
+			"success": true,
+			"plugin": "MC Remote API",
+			"version": "1.1.0"
+		}
+	},
+	"errors": {
+		"unauthorized": {
+			"success": false,
+			"code": "unauthorized",
+			"message": "Invalid or missing API secret."
+		},
+		"invalid_email": {
+			"success": false,
+			"code": "invalid_email",
+			"message": "The provided email address is not valid."
+		},
+		"missing_fields": {
+			"success": false,
+			"code": "missing_required_param",
+			"message": "A required parameter is missing."
+		},
+		"server_error": {
+			"success": false,
+			"code": "server_error",
+			"message": "An unexpected server error occurred."
+		}
+	}
+}

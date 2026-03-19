@@ -1,0 +1,24 @@
+[
+	{
+		"id": 10,
+		"name": "Test Product A",
+		"type": "simple",
+		"status": "publish",
+		"regular_price": "29.99",
+		"sku": "TEST-PROD-A",
+		"categories": [
+			{ "id": 1, "name": "Test Category" }
+		]
+	},
+	{
+		"id": 20,
+		"name": "Test Product B",
+		"type": "simple",
+		"status": "publish",
+		"regular_price": "29.99",
+		"sku": "TEST-PROD-B",
+		"categories": [
+			{ "id": 1, "name": "Test Category" }
+		]
+	}
+]

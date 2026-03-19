@@ -1,0 +1,38 @@
+[
+	{
+		"id": 101,
+		"email": "john.doe@example.com",
+		"first_name": "John",
+		"last_name": "Doe",
+		"username": "johndoe",
+		"role": "customer",
+		"billing": {
+			"first_name": "John",
+			"last_name": "Doe",
+			"email": "john.doe@example.com",
+			"address_1": "123 Main St",
+			"city": "Springfield",
+			"state": "IL",
+			"postcode": "62701",
+			"country": "US"
+		}
+	},
+	{
+		"id": 102,
+		"email": "jane.smith@example.com",
+		"first_name": "Jane",
+		"last_name": "Smith",
+		"username": "janesmith",
+		"role": "customer",
+		"billing": {
+			"first_name": "Jane",
+			"last_name": "Smith",
+			"email": "jane.smith@example.com",
+			"address_1": "456 Oak Ave",
+			"city": "Shelbyville",
+			"state": "IL",
+			"postcode": "62565",
+			"country": "US"
+		}
+	}
+]

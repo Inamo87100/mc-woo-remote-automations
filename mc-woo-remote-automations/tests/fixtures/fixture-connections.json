@@ -1,0 +1,20 @@
+[
+	{
+		"name": "Test API Connection",
+		"url": "http://localhost/wp-json",
+		"secret": "test_secret_key_abcdefghij12345",
+		"status": "active"
+	},
+	{
+		"name": "Staging Connection",
+		"url": "https://staging.example.com/wp-json",
+		"secret": "staging_secret_xyz_9876543210abc",
+		"status": "active"
+	},
+	{
+		"name": "Inactive Connection",
+		"url": "https://old.example.com/wp-json",
+		"secret": "old_secret_key_disabled_000000",
+		"status": "inactive"
+	}
+]
