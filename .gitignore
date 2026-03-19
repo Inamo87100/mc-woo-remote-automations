@@ -1,0 +1,27 @@
+# Dependencies
+vendor/
+node_modules/
+
+# Build artifacts
+*.zip
+dist/
+
+# IDE/Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# PHP
+*.log
+composer.lock
+
+# WordPress test files
+/wordpress-tests-lib/
+/wordpress/
+
+# Environment
+.env
+.env.local
