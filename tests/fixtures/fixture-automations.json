@@ -1,0 +1,25 @@
+[
+	{
+		"name": "Create User on Order Completed",
+		"trigger": "woocommerce_order_status_completed",
+		"action": "mc_create_user",
+		"conditions": []
+	},
+	{
+		"name": "Assign Role on Specific Product",
+		"trigger": "woocommerce_order_status_completed",
+		"action": "mc_assign_role",
+		"conditions": [
+			{
+				"type": "product_id",
+				"value": 10
+			}
+		]
+	},
+	{
+		"name": "Create User on Processing",
+		"trigger": "woocommerce_order_status_processing",
+		"action": "mc_create_user",
+		"conditions": []
+	}
+]

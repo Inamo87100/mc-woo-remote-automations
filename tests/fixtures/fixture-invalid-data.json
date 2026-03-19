@@ -1,0 +1,55 @@
+{
+	"invalid_emails": [
+		"not-an-email",
+		"missing@",
+		"@nodomain.com",
+		"spaces in@email.com",
+		"<script>alert(1)</script>",
+		"",
+		"a@b",
+		"toolong_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@example.com"
+	],
+	"missing_required_fields": [
+		{
+			"description": "Missing first_name",
+			"user_email": "test@example.com",
+			"last_name": "User",
+			"role": "subscriber"
+		},
+		{
+			"description": "Missing last_name",
+			"user_email": "test@example.com",
+			"first_name": "Test",
+			"role": "subscriber"
+		},
+		{
+			"description": "Missing role",
+			"user_email": "test@example.com",
+			"first_name": "Test",
+			"last_name": "User"
+		},
+		{
+			"description": "Missing user_email",
+			"first_name": "Test",
+			"last_name": "User",
+			"role": "subscriber"
+		},
+		{
+			"description": "All fields missing",
+			"extra_field": "irrelevant"
+		}
+	],
+	"invalid_roles": [
+		"superadmin_xyz",
+		"nonexistent_role",
+		"administrator<script>alert(1)</script>",
+		"',DROP TABLE wp_users;--",
+		"",
+		"a_role_name_that_is_way_too_long_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+	],
+	"oversized_inputs": {
+		"description": "Inputs exceeding typical field length limits",
+		"first_name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"last_name": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+	}
+}
