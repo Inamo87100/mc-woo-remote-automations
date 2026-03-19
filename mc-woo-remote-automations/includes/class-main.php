@@ -193,7 +193,6 @@ class MC_Woo_Remote_Main {
 					'user_email' => $email,
 					'first_name' => $first,
 					'last_name'  => $last,
-					'user_pass'  => $email,
 					'role'       => 'customer',
 				);
 				$response = wp_remote_post(

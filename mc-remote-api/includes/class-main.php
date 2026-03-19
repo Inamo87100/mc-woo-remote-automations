@@ -81,6 +81,17 @@ class MC_Remote_API_Main {
 	}
 
 	/**
+	 * Returns a valid WordPress role slug, falling back to a default.
+	 *
+	 * @param string $role    Requested role slug.
+	 * @param string $default Fallback role to use when $role is invalid.
+	 * @return string
+	 */
+	private function sanitize_role( $role, $default = 'customer' ) {
+		return wp_roles()->is_role( $role ) ? $role : $default;
+	}
+
+	/**
 	 * Handles the /ping endpoint.
 	 *
 	 * @param WP_REST_Request $request Incoming REST request.
@@ -107,7 +118,7 @@ class MC_Remote_API_Main {
 		$email = sanitize_email( $request['user_email'] );
 		$first = sanitize_text_field( $request['first_name'] );
 		$last  = sanitize_text_field( $request['last_name'] );
-		$role  = sanitize_text_field( $request['role'] ? $request['role'] : 'customer' );
+		$role  = $this->sanitize_role( sanitize_text_field( $request['role'] ?? 'customer' ) );
 
 		if ( ! $email || ! is_email( $email ) ) {
 			return new WP_REST_Response( array( 'success' => false, 'message' => 'Invalid email' ), 400 );
@@ -118,7 +129,9 @@ class MC_Remote_API_Main {
 			return array( 'success' => true, 'code' => 'user_exists', 'user_id' => $user ? $user->ID : 0 );
 		}
 
-		$user_id = wp_create_user( $email, $email, $email );
+		// Generate a secure random password instead of using the email address.
+		$password = wp_generate_password( 24, true, false );
+		$user_id  = wp_create_user( $email, $password, $email );
 		if ( is_wp_error( $user_id ) ) {
 			return new WP_REST_Response( array( 'success' => false, 'message' => $user_id->get_error_message() ), 500 );
 		}
@@ -153,6 +166,11 @@ class MC_Remote_API_Main {
 			return new WP_REST_Response( array( 'success' => false, 'message' => 'Missing email or role' ), 400 );
 		}
 
+		// Validate that the requested role exists in WordPress.
+		if ( ! wp_roles()->is_role( $role ) ) {
+			return new WP_REST_Response( array( 'success' => false, 'message' => 'Invalid role' ), 400 );
+		}
+
 		$user = get_user_by( 'email', $email );
 		if ( ! $user ) {
 			return new WP_REST_Response( array( 'success' => false, 'message' => 'User not found' ), 404 );
@@ -180,7 +198,13 @@ class MC_Remote_API_Main {
 	 * Registers the mc_api_secret option.
 	 */
 	public function register_settings() {
-		register_setting( 'mc_api_settings', 'mc_api_secret' );
+		register_setting(
+			'mc_api_settings',
+			'mc_api_secret',
+			array(
+				'sanitize_callback' => 'sanitize_text_field',
+			)
+		);
 	}
 
 	/**

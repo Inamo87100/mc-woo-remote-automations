@@ -316,13 +316,14 @@ class MC_Woo_Remote_Admin {
 				$redirect
 			);
 		} else {
-			$code     = wp_remote_retrieve_response_code( $response );
-			$body     = wp_remote_retrieve_body( $response );
-			$ok       = ( $code >= 200 && $code < 300 );
-			$redirect = add_query_arg(
+			$code         = wp_remote_retrieve_response_code( $response );
+			$body         = wp_remote_retrieve_body( $response );
+			$body_preview = substr( (string) $body, 0, 200 );
+			$ok           = ( $code >= 200 && $code < 300 );
+			$redirect     = add_query_arg(
 				array(
 					'mc_wra_test' => $ok ? '1' : '0',
-					'mc_wra_msg'  => rawurlencode( 'HTTP ' . $code . ' ' . $body ),
+					'mc_wra_msg'  => rawurlencode( 'HTTP ' . $code . ' ' . $body_preview ),
 				),
 				$redirect
 			);
@@ -336,11 +337,13 @@ class MC_Woo_Remote_Admin {
 	 * Displays a test-connection result notice when redirected back.
 	 */
 	public function render_test_result_notice() {
-		if ( empty( $_GET['mc_wra_test'] ) || empty( $_GET['mc_wra_msg'] ) ) {
+		$test_result = isset( $_GET['mc_wra_test'] ) ? sanitize_text_field( wp_unslash( $_GET['mc_wra_test'] ) ) : '';
+		$test_msg    = isset( $_GET['mc_wra_msg'] ) ? sanitize_text_field( wp_unslash( rawurldecode( $_GET['mc_wra_msg'] ) ) ) : '';
+		if ( '' === $test_result || '' === $test_msg ) {
 			return;
 		}
-		$class = '1' === $_GET['mc_wra_test'] ? 'notice notice-success' : 'notice notice-error';
-		echo '<div class="' . esc_attr( $class ) . '"><p>' . esc_html( rawurldecode( $_GET['mc_wra_msg'] ) ) . '</p></div>';
+		$class = '1' === $test_result ? 'notice notice-success' : 'notice notice-error';
+		echo '<div class="' . esc_attr( $class ) . '"><p>' . esc_html( $test_msg ) . '</p></div>';
 	}
 
 	/**
