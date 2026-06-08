@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#31006F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4a1590;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="woo" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FDB927;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fdd060;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#bg2)" />
+  <!-- Gear / automation symbol -->
+  <circle cx="64" cy="64" r="18" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.9"/>
+  <circle cx="64" cy="64" r="8" fill="url(#woo)" />
+  <!-- Gear teeth -->
+  <rect x="61" y="35" width="6" height="10" rx="2" fill="#ffffff" opacity="0.85"/>
+  <rect x="61" y="83" width="6" height="10" rx="2" fill="#ffffff" opacity="0.85"/>
+  <rect x="35" y="61" width="10" height="6" rx="2" fill="#ffffff" opacity="0.85"/>
+  <rect x="83" y="61" width="10" height="6" rx="2" fill="#ffffff" opacity="0.85"/>
+  <!-- Diagonal teeth -->
+  <rect x="43" y="41" width="6" height="10" rx="2" fill="#ffffff" opacity="0.7" transform="rotate(-45 46 46)"/>
+  <rect x="79" y="41" width="6" height="10" rx="2" fill="#ffffff" opacity="0.7" transform="rotate(45 82 46)"/>
+  <rect x="43" y="77" width="6" height="10" rx="2" fill="#ffffff" opacity="0.7" transform="rotate(45 46 82)"/>
+  <rect x="79" y="77" width="6" height="10" rx="2" fill="#ffffff" opacity="0.7" transform="rotate(-45 82 82)"/>
+  <!-- WooCommerce shopping cart hint -->
+  <path d="M26 28 L30 28 L36 48 L54 48 L58 36 L32 36" stroke="#FDB927" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="38" cy="52" r="2.5" fill="#FDB927"/>
+  <circle cx="50" cy="52" r="2.5" fill="#FDB927"/>
+  <!-- Arrow flow right -->
+  <path d="M70 28 L80 28 L76 24 M80 28 L76 32" stroke="#FDB927" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- MC text -->
+  <text x="64" y="115" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#FDB927" text-anchor="middle" letter-spacing="1">AUTOMATIONS</text>
+</svg>
