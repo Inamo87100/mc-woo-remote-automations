@@ -99,6 +99,7 @@ No custom code. No cron jobs. No third-party SaaS. Just the same WordPress plugi
    * **Assign Role Endpoint** — leave as default `/wp-json/mc/v1/assign-role` unless customised.
    * **Ping Endpoint** — leave as default `/wp-json/mc/v1/ping` unless customised.
    * **Remote API Secret** — paste the API secret you copied from the destination site.
+   * Keep the endpoint fields at their defaults unless you intentionally changed route paths on the destination site.
 4. Check the **Enabled** box.
 5. Click **Save & Test Connection** to save the Connection and immediately verify the credentials.
 

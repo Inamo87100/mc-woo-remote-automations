@@ -225,7 +225,10 @@ class MC_Woo_Remote_Helpers {
 			return self::truncate_for_storage( (string) $json );
 		}
 
-		return self::truncate_for_storage( (string) self::redact_sensitive_data( wp_strip_all_tags( $response_body ) ) );
+		$stripped = wp_strip_all_tags( $response_body );
+		$redacted = self::redact_sensitive_data( (string) $stripped );
+
+		return self::truncate_for_storage( (string) $redacted );
 	}
 
 	/**

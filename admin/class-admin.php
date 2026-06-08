@@ -165,10 +165,25 @@ class MC_Woo_Remote_Admin {
 				<th><label for="mc_remote_secret"><?php esc_html_e( 'Remote API Secret', 'mc-woo-remote-automations' ); ?></label></th>
 				<td>
 					<input type="password" class="regular-text" id="mc_remote_secret" name="mc_remote_secret" value="<?php echo esc_attr( $remote_secret ); ?>">
+					<button type="button" class="button" id="mc_remote_secret_toggle" style="margin-left:8px;"><?php esc_html_e( 'Show', 'mc-woo-remote-automations' ); ?></button>
 					<p class="description"><?php esc_html_e( 'Paste here the Remote API Secret generated on the destination site settings page.', 'mc-woo-remote-automations' ); ?></p>
 				</td>
 			</tr>
 		</table>
+		<script>
+		(function() {
+			var field = document.getElementById('mc_remote_secret');
+			var toggle = document.getElementById('mc_remote_secret_toggle');
+			if (!field || !toggle) {
+				return;
+			}
+			toggle.addEventListener('click', function() {
+				var show = field.type === 'password';
+				field.type = show ? 'text' : 'password';
+				toggle.textContent = show ? '<?php echo esc_js( __( 'Hide', 'mc-woo-remote-automations' ) ); ?>' : '<?php echo esc_js( __( 'Show', 'mc-woo-remote-automations' ) ); ?>';
+			});
+		}());
+		</script>
 		<?php
 	}
 
@@ -1126,6 +1141,7 @@ class MC_Woo_Remote_Admin {
 						<th><label for="mc_wra_api_secret"><?php esc_html_e( 'Remote API Secret', 'mc-woo-remote-automations' ); ?></label></th>
 						<td>
 							<input type="password" class="regular-text" id="mc_wra_api_secret" name="mc_wra_api_secret" value="<?php echo esc_attr( $api_secret ); ?>">
+							<button type="button" class="button" id="mc_wra_api_secret_toggle" style="margin-left:8px;"><?php esc_html_e( 'Show', 'mc-woo-remote-automations' ); ?></button>
 							<p class="description"><?php esc_html_e( 'Copy this secret into the Connection settings on the Controller site. It is checked against the X-MC-SECRET request header.', 'mc-woo-remote-automations' ); ?></p>
 						</td>
 					</tr>
@@ -1155,6 +1171,20 @@ class MC_Woo_Remote_Admin {
 				<?php submit_button(); ?>
 			</form>
 		</div>
+		<script>
+		(function() {
+			var field = document.getElementById('mc_wra_api_secret');
+			var toggle = document.getElementById('mc_wra_api_secret_toggle');
+			if (!field || !toggle) {
+				return;
+			}
+			toggle.addEventListener('click', function() {
+				var show = field.type === 'password';
+				field.type = show ? 'text' : 'password';
+				toggle.textContent = show ? '<?php echo esc_js( __( 'Hide', 'mc-woo-remote-automations' ) ); ?>' : '<?php echo esc_js( __( 'Show', 'mc-woo-remote-automations' ) ); ?>';
+			});
+		}());
+		</script>
 		<?php
 	}
 }
