@@ -121,7 +121,13 @@ class MC_Woo_Remote_API {
 		$role  = $this->sanitize_role( (string) $request->get_param( 'role' ), 'customer' );
 
 		if ( ! $email || ! is_email( $email ) ) {
-			return new WP_REST_Response( array( 'success' => false, 'message' => 'Invalid email' ), 400 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => esc_html__( 'Invalid email.', 'mc-woo-remote-automations' ),
+				),
+				400
+			);
 		}
 
 		if ( email_exists( $email ) ) {
@@ -159,16 +165,34 @@ class MC_Woo_Remote_API {
 		$role  = sanitize_key( (string) $request->get_param( 'role' ) );
 
 		if ( ! $email || ! is_email( $email ) || ! $role ) {
-			return new WP_REST_Response( array( 'success' => false, 'message' => 'Missing email or role' ), 400 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => esc_html__( 'Missing email or role.', 'mc-woo-remote-automations' ),
+				),
+				400
+			);
 		}
 
 		if ( ! wp_roles()->is_role( $role ) ) {
-			return new WP_REST_Response( array( 'success' => false, 'message' => 'Invalid role' ), 400 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => esc_html__( 'Invalid role.', 'mc-woo-remote-automations' ),
+				),
+				400
+			);
 		}
 
 		$user = get_user_by( 'email', $email );
 		if ( ! $user ) {
-			return new WP_REST_Response( array( 'success' => false, 'message' => 'User not found' ), 404 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => esc_html__( 'User not found.', 'mc-woo-remote-automations' ),
+				),
+				404
+			);
 		}
 
 		$user->set_role( $role );

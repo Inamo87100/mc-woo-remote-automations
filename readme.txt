@@ -2,7 +2,7 @@
 Contributors: mambacoding
 Tags: woocommerce, automation, remote, api, user-management, roles, integration
 Requires at least: 5.0
-Tested up to: 6.7
+Tested up to: 6.8
 Requires PHP: 7.4
 Stable tag: 1.2.7
 License: GPL v2 or later
@@ -24,7 +24,7 @@ No custom code. No cron jobs. No third-party SaaS. Just the same WordPress plugi
 * **Manage roles across sites** — upgrade a subscriber to a member, activate a student account, or revoke access, all triggered by order events.
 * **Multiple remote sites** — one plugin handles unlimited Connections simultaneously, each with its own credentials and endpoints.
 * **Product-level granularity** — each Automation rule targets one or more specific products, so different products can trigger different actions on different remote sites.
-* **Full audit trail** — every API call is logged with its request payload, HTTP response code, and response body so you can diagnose issues instantly.
+* **Full audit trail** — every API call is logged with status, response code, and redacted payload/response previews for troubleshooting.
 
 = Key Features =
 
@@ -71,7 +71,7 @@ No custom code. No cron jobs. No third-party SaaS. Just the same WordPress plugi
 * WooCommerce 4.0 or higher on the **source** site.
 * PHP 7.4 or higher on both sites.
 * MC-Woo Remote Automations installed and activated on each **destination** site in Remote API mode.
-* HTTPS recommended on both sites to keep API secrets secure in transit.
+* HTTPS is required for remote URLs (HTTP is accepted only for `localhost` or `127.0.0.1` development targets).
 
 == Installation ==
 
@@ -99,7 +99,6 @@ No custom code. No cron jobs. No third-party SaaS. Just the same WordPress plugi
    * **Assign Role Endpoint** — leave as default `/wp-json/mc/v1/assign-role` unless customised.
    * **Ping Endpoint** — leave as default `/wp-json/mc/v1/ping` unless customised.
    * **Remote API Secret** — paste the API secret you copied from the destination site.
-   * **Remote API Secret** — leave blank to reuse the Remote API Secret, or enter a separate secret.
 4. Check the **Enabled** box.
 5. Click **Save & Test Connection** to save the Connection and immediately verify the credentials.
 
@@ -152,22 +151,22 @@ Execution data is recorded for each API call in `{prefix}mc_wra_logs`, including
 * Order ID and customer e-mail
 * Action key (`create_user` or `assign_role`)
 * Status, HTTP response code, message
-* Request payload and raw response body (redacted in admin display)
+* Redacted and minimized request/response previews
 
 = Global Settings =
 
 Navigate to **Woo Remote Automations → Settings** to configure:
 
-* **Companion Plugin Setup** section with one-click access to download/install guidance for **MC Remote API**.
+* **Operating mode** (`controller`, `remote`, `both`) to control whether the site runs controller automation hooks, remote API routes, or both.
 * **Default Timeout** (seconds) used by automations without an override.
 * **Log Retention (days)** used by the Logs cleanup action (set `0` to disable retention-based cleanup).
 * **Delete data on uninstall** to opt in to full data removal when uninstalling the plugin.
 
 == Frequently Asked Questions ==
 
-= Do I need to install two plugins? =
+= Do I need to install a separate companion plugin? =
 
-Yes. Install **MC-Woo Remote Automations** on your WooCommerce store and **MC Remote API** on each destination site. Both plugins are free.
+No. Install **MC-Woo Remote Automations** on both sites. Use **Controller** mode on the WooCommerce source site and **Remote API** mode on the destination site (or **Both** when one site needs both roles).
 
 = Can I connect to multiple remote sites? =
 
@@ -223,7 +222,7 @@ Customer e-mail addresses and names are transmitted to the remote site via the R
 = The automation fires but the user is not created — what should I check? =
 
 1. Open **Woo Remote Automations → Logs** and inspect the response body for the failed call.
-2. Confirm the Connection is **Enabled** and the secret matches the one in **Settings → MC Remote API** on the destination site.
+2. Confirm the Connection is **Enabled** and the secret matches the one in **Woo Remote Automations → Settings** on the destination site.
 3. Use the **Save & Test Connection** button on the Connection record to rule out network or credential issues.
 4. Confirm that the destination site's permalink structure is set to something other than **Plain** (REST API requires pretty permalinks).
 
@@ -236,11 +235,11 @@ Customer e-mail addresses and names are transmitted to the remote site via the R
 
 == External Services ==
 
-This plugin communicates with remote WordPress sites that have the **MC Remote API** plugin installed. No data is sent to any third-party or Mamba Coding servers.
+This plugin communicates with remote WordPress sites where **MC-Woo Remote Automations** is installed and set to Remote API mode. No data is sent to any third-party or Mamba Coding servers.
 
 **When does it connect?**
 
-* When an order changes status and an Automation is triggered, the plugin sends an HTTPS request to the remote site URL you configured in the Connection record.
+* When an order changes status and an Automation is triggered, the plugin sends a request to the remote site URL you configured in the Connection record (HTTPS required, except `localhost`/`127.0.0.1` development targets).
 * When you click the **Save & Test Connection** button, the plugin sends a ping request to the remote site.
 
 **What data is sent?**
@@ -253,9 +252,19 @@ This plugin communicates with remote WordPress sites that have the **MC Remote A
 
 Data is sent exclusively to the remote site URL you enter in each Connection record — a WordPress site you own and control. No data is ever sent to Mamba Coding or any other third party.
 
-The remote site must have **MC Remote API** installed. By using this plugin you take responsibility for the data transfer between your sites. Document this processing in your privacy policy as required by applicable law (e.g. GDPR).
+The remote site must run this plugin in Remote API mode. By using this plugin you take responsibility for the data transfer between your sites. Document this processing in your privacy policy as required by applicable law (e.g. GDPR).
 
 == Changelog ==
+
+= 1.2.7 =
+* Restricted Connection and Automation post type capabilities to administrators.
+* Enforced secure remote URL validation (HTTPS required, localhost/127.0.0.1 HTTP allowed for development).
+* Applied operating mode gating so controller and remote behaviors are loaded only when selected.
+* Executed only published automations.
+* Reduced persisted log sensitivity by storing redacted/minimized payload and response previews.
+* Internationalized remaining user-facing REST API error messages.
+* Removed promotional admin banner runtime behavior.
+* Updated documentation for current single-plugin architecture and metadata consistency.
 
 = 1.2.0 =
 * Integrated the remote API functionality into the main plugin so the same plugin can be installed on source and destination sites.
@@ -274,18 +283,18 @@ The remote site must have **MC Remote API** installed. By using this plugin you 
 = 1.1.0 =
 * Added per-automation timeout override field.
 * Added **Test Connection** button to Connection records with inline pass/fail notice.
-* Improved execution logging: request payload and raw response body are now stored alongside the status code and message.
+* Improved execution logging with request and response details in the Logs screen.
 
 = 1.0.0 =
 * Initial release.
 * Custom post types `mcwra_connection` and `mcwra_automation` for visual configuration.
 * Order status trigger with per-automation product filtering.
-* Remote user creation via MC Remote API `create-user` endpoint.
-* Remote role assignment via MC Remote API `assign-role` endpoint.
+* Remote user creation via the built-in `create-user` endpoint.
+* Remote role assignment via the built-in `assign-role` endpoint.
 * Execution log table for debugging.
 * Admin menu under **Woo Remote Automations** with Automations, Connections, Logs, and Settings sub-pages.
 
 == Upgrade Notice ==
 
-= 1.1.3 =
-Structural refactor only — no changes to automation behaviour, trigger logic, API calls, or any stored data. Safe to update without re-configuring connections or automations.
+= 1.2.7 =
+Includes WordPress.org submission-readiness updates for access control, secure connection validation, operating mode enforcement, safer logging defaults, and documentation consistency.
