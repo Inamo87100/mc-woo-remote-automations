@@ -4,7 +4,7 @@ Tags: woocommerce, automation, remote, api, user-management, roles, integration
 Requires at least: 5.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.2.7
+Stable tag: 1.2.8
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 4.0
@@ -236,26 +236,33 @@ Customer e-mail addresses and names are transmitted to the remote site via the R
 
 == External Services ==
 
-This plugin communicates with remote WordPress sites where **MC-Woo Remote Automations** is installed and set to Remote API mode. No data is sent to any third-party or Mamba Coding servers.
+**This plugin does not connect to any developer-owned, Mamba Coding, or third-party server.**
+
+All outbound HTTP requests made by this plugin go only to the remote WordPress site URL that the site administrator explicitly enters in a Connection record. The plugin developer has no access to, and receives no data from, any of those requests.
 
 **When does it connect?**
 
-* When an order changes status and an Automation is triggered, the plugin sends a request to the remote site URL you configured in the Connection record (HTTPS required, except `localhost`/`127.0.0.1` development targets).
-* When you click the **Save & Test Connection** button, the plugin sends a ping request to the remote site.
+* When a WooCommerce order transitions to a status that matches an active Automation rule and the order contains one of the configured products, the plugin sends a REST API request to the administrator-configured remote site URL.
+* When the administrator clicks the **Save & Test Connection** button on a Connection record, the plugin sends a single ping request to that same administrator-configured URL.
 
-**What data is sent?**
+**What data is transmitted?**
 
-* Customer billing e-mail address, first name, and last name (for the create-user action).
-* Customer billing e-mail address and a role slug you chose (for the assign-role action).
-* A shared API secret (in the request header) that you configured.
+* For the create-user action: customer billing e-mail address, first name, and last name.
+* For the assign-role action: customer billing e-mail address and the role slug the administrator configured.
+* Both requests include a shared API secret in the `X-MC-SECRET` HTTP header; this secret is generated and stored locally and is never transmitted to anyone other than the destination site.
 
-**Where does it go?**
+**Where does the data go?**
 
-Data is sent exclusively to the remote site URL you enter in each Connection record — a WordPress site you own and control. No data is ever sent to Mamba Coding or any other third party.
+Data is sent exclusively to the remote WordPress site URL the administrator enters in each Connection record. That site is always a WordPress installation the administrator owns and controls. No data is routed through or stored on any server controlled by the plugin developer or any third party.
 
-The remote site must run this plugin in Remote API mode. By using this plugin you take responsibility for the data transfer between your sites. Document this processing in your privacy policy as required by applicable law (e.g. GDPR).
+The destination site must have this same plugin installed and set to Remote API mode. The site administrator is responsible for ensuring the transfer complies with applicable law (e.g. GDPR) and for documenting this processing in the site's privacy policy. A suggested privacy-policy text is provided automatically by this plugin under Settings → Privacy → Privacy Policy Guide.
 
 == Changelog ==
+
+= 1.2.8 =
+* Added WordPress privacy policy integration: suggested privacy-policy text is now registered with the Privacy Policy Guide under Settings → Privacy.
+* Strengthened External Services section in readme to explicitly state that no data is sent to developer-owned or third-party servers.
+* Removed unused admin banner class file that contained upsell copy.
 
 = 1.2.7 =
 * Restricted Connection and Automation post type capabilities to administrators.
@@ -296,6 +303,9 @@ The remote site must run this plugin in Remote API mode. By using this plugin yo
 * Admin menu under **Woo Remote Automations** with Automations, Connections, Logs, and Settings sub-pages.
 
 == Upgrade Notice ==
+
+= 1.2.8 =
+Adds WordPress privacy policy integration and further clarifies that all outbound requests go only to administrator-configured sites, never to developer-owned servers.
 
 = 1.2.7 =
 Includes WordPress.org submission-readiness updates for access control, secure connection validation, operating mode enforcement, safer logging defaults, and documentation consistency.

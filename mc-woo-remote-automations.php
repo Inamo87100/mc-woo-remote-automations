@@ -3,7 +3,7 @@
  * Plugin Name:       MC-Woo Remote Automations
  * Plugin URI:        https://mambacoding.com/
  * Description:       Automate remote user creation and role assignment from WooCommerce orders.
- * Version:           1.2.7
+ * Version:           1.2.8
  * Author:            Mamba Coding
  * Author URI:        https://mambacoding.com/
  * License:           GPL v2 or later
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin version.
-define( 'MC_WOO_REMOTE_VERSION', '1.2.7' );
+define( 'MC_WOO_REMOTE_VERSION', '1.2.8' );
 
 // Absolute path to the plugin directory (with trailing slash).
 define( 'MC_WOO_REMOTE_PATH', plugin_dir_path( __FILE__ ) );
