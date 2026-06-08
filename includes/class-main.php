@@ -119,6 +119,7 @@ class MC_Woo_Remote_Main {
 				'done' => true,
 			);
 		}
+		$table = esc_sql( $table );
 
 		$query = $wpdb->prepare(
 			"SELECT id, created_at, action_key, status, response_code, message, order_id, request_payload, response_body FROM {$table} WHERE user_email = %s ORDER BY id ASC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -218,6 +219,7 @@ class MC_Woo_Remote_Main {
 				'done'           => true,
 			);
 		}
+		$table = esc_sql( $table );
 
 		$query = $wpdb->prepare(
 			"SELECT id, message FROM {$table} WHERE user_email = %s ORDER BY id ASC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
