@@ -204,9 +204,7 @@ class MC_Woo_Remote_Main {
 		global $wpdb;
 
 		$email_address  = sanitize_email( $email_address );
-		$page           = max( 1, absint( $page ) );
 		$number         = 50;
-		$offset         = ( $page - 1 ) * $number;
 		$items_removed  = false;
 		$items_retained = false;
 		$messages       = array();
@@ -222,10 +220,9 @@ class MC_Woo_Remote_Main {
 		}
 
 		$query = $wpdb->prepare(
-			"SELECT id, message FROM {$table} WHERE user_email = %s ORDER BY id ASC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			"SELECT id, message FROM {$table} WHERE user_email = %s ORDER BY id ASC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$email_address,
-			$number,
-			$offset
+			$number
 		);
 		$rows  = $wpdb->get_results( $query, ARRAY_A );
 
