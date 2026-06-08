@@ -24,6 +24,8 @@ class MC_Woo_Remote_Main {
 		register_activation_hook( MC_WOO_REMOTE_FILE, array( $this, 'activate' ) );
 		add_action( 'init', array( $this, 'register_post_types' ) );
 		add_action( 'admin_init', array( $this, 'add_privacy_policy_content' ) );
+		add_filter( 'wp_privacy_personal_data_exporters', array( $this, 'register_personal_data_exporter' ) );
+		add_filter( 'wp_privacy_personal_data_erasers', array( $this, 'register_personal_data_eraser' ) );
 		new MC_Woo_Remote_Admin();
 		$mode = get_option( 'mc_wra_operating_mode', 'both' );
 
@@ -55,11 +57,241 @@ class MC_Woo_Remote_Main {
 		$content .= '</ul>';
 		$content .= '<p><strong>' . __( 'When data is transmitted:', 'mc-woo-remote-automations' ) . '</strong> ' . __( 'Only when an order transitions to the status configured in an active Automation rule and the order contains one of the configured products.', 'mc-woo-remote-automations' ) . '</p>';
 		$content .= '<p><strong>' . __( 'Local logging:', 'mc-woo-remote-automations' ) . '</strong> ' . __( 'Each API call writes a log record to a local database table. The record includes the customer e-mail address, the HTTP response code, and a redacted preview of the request/response payload. Logs can be reviewed and purged at any time from Woo Remote Automations → Logs.', 'mc-woo-remote-automations' ) . '</p>';
+		$content .= '<p>' . __( 'Log entries tied to an e-mail address can be exported and erased through WordPress privacy tools under Tools → Export Personal Data and Tools → Erase Personal Data.', 'mc-woo-remote-automations' ) . '</p>';
 		$content .= '<p>' . __( 'As the site administrator you are responsible for documenting this data transfer in your own privacy policy as required by applicable law (e.g. GDPR).', 'mc-woo-remote-automations' ) . '</p>';
 
 		wp_add_privacy_policy_content(
 			__( 'MC-Woo Remote Automations', 'mc-woo-remote-automations' ),
 			wp_kses_post( $content )
+		);
+	}
+
+	/**
+	 * Registers this plugin's personal-data exporter with WordPress privacy tools.
+	 *
+	 * @param array<string, array<string, mixed>> $exporters Registered exporters.
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function register_personal_data_exporter( $exporters ) {
+		$exporters['mc-wra-logs'] = array(
+			'exporter_friendly_name' => __( 'MC-Woo Remote Automations Logs', 'mc-woo-remote-automations' ),
+			'callback'               => array( $this, 'export_personal_data' ),
+		);
+
+		return $exporters;
+	}
+
+	/**
+	 * Registers this plugin's personal-data eraser with WordPress privacy tools.
+	 *
+	 * @param array<string, array<string, mixed>> $erasers Registered erasers.
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function register_personal_data_eraser( $erasers ) {
+		$erasers['mc-wra-logs'] = array(
+			'eraser_friendly_name' => __( 'MC-Woo Remote Automations Logs', 'mc-woo-remote-automations' ),
+			'callback'             => array( $this, 'erase_personal_data' ),
+		);
+
+		return $erasers;
+	}
+
+	/**
+	 * Exports plugin log records associated with a matching e-mail address.
+	 *
+	 * @param string $email_address User e-mail address submitted to the exporter tool.
+	 * @param int    $page          Export page number.
+	 * @return array<string, mixed>
+	 */
+	public function export_personal_data( $email_address, $page = 1 ) {
+		global $wpdb;
+
+		$email_address = sanitize_email( $email_address );
+		$page          = max( 1, absint( $page ) );
+		$number        = 50;
+		$offset        = ( $page - 1 ) * $number;
+		$data          = array();
+		$table         = MC_Woo_Remote_Helpers::get_log_table_name();
+
+		if ( '' === $table || '' === $email_address ) {
+			return array(
+				'data' => $data,
+				'done' => true,
+			);
+		}
+
+		$query = $wpdb->prepare(
+			"SELECT id, created_at, action_key, status, response_code, message, order_id, request_payload, response_body FROM {$table} WHERE user_email = %s ORDER BY id ASC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$email_address,
+			$number,
+			$offset
+		);
+		$rows  = $wpdb->get_results( $query, ARRAY_A );
+
+		foreach ( $rows as $row ) {
+			$item_data = array(
+				array(
+					'name'  => __( 'Log date', 'mc-woo-remote-automations' ),
+					'value' => (string) $row['created_at'],
+				),
+				array(
+					'name'  => __( 'Customer e-mail', 'mc-woo-remote-automations' ),
+					'value' => $email_address,
+				),
+				array(
+					'name'  => __( 'Action', 'mc-woo-remote-automations' ),
+					'value' => $this->get_log_action_label( (string) $row['action_key'] ),
+				),
+				array(
+					'name'  => __( 'Execution status', 'mc-woo-remote-automations' ),
+					'value' => (string) $row['status'],
+				),
+				array(
+					'name'  => __( 'HTTP response code', 'mc-woo-remote-automations' ),
+					'value' => is_null( $row['response_code'] ) ? '' : (string) $row['response_code'],
+				),
+				array(
+					'name'  => __( 'Result message', 'mc-woo-remote-automations' ),
+					'value' => (string) $row['message'],
+				),
+			);
+
+			if ( ! empty( $row['order_id'] ) ) {
+				$item_data[] = array(
+					'name'  => __( 'Order ID', 'mc-woo-remote-automations' ),
+					'value' => (string) intval( $row['order_id'] ),
+				);
+			}
+			if ( ! empty( $row['request_payload'] ) ) {
+				$item_data[] = array(
+					'name'  => __( 'Request payload summary', 'mc-woo-remote-automations' ),
+					'value' => (string) $row['request_payload'],
+				);
+			}
+			if ( ! empty( $row['response_body'] ) ) {
+				$item_data[] = array(
+					'name'  => __( 'Response body summary', 'mc-woo-remote-automations' ),
+					'value' => (string) $row['response_body'],
+				);
+			}
+
+			$data[] = array(
+				'group_id'    => 'mc-wra-logs',
+				'group_label' => __( 'MC-Woo Remote Automations Logs', 'mc-woo-remote-automations' ),
+				'item_id'     => 'mc-wra-log-' . intval( $row['id'] ),
+				'data'        => $item_data,
+			);
+		}
+
+		return array(
+			'data' => $data,
+			'done' => count( $rows ) < $number,
+		);
+	}
+
+	/**
+	 * Anonymizes plugin log records associated with a matching e-mail address.
+	 *
+	 * We intentionally anonymize instead of deleting rows so administrators keep
+	 * operational audit signals (timestamps, action type, status, and response code)
+	 * while personally identifiable fields are removed.
+	 *
+	 * @param string $email_address User e-mail address submitted to the eraser tool.
+	 * @param int    $page          Eraser page number.
+	 * @return array<string, mixed>
+	 */
+	public function erase_personal_data( $email_address, $page = 1 ) {
+		global $wpdb;
+
+		$email_address  = sanitize_email( $email_address );
+		$page           = max( 1, absint( $page ) );
+		$number         = 50;
+		$offset         = ( $page - 1 ) * $number;
+		$items_removed  = false;
+		$items_retained = false;
+		$messages       = array();
+		$table          = MC_Woo_Remote_Helpers::get_log_table_name();
+
+		if ( '' === $table || '' === $email_address ) {
+			return array(
+				'items_removed'  => false,
+				'items_retained' => false,
+				'messages'       => $messages,
+				'done'           => true,
+			);
+		}
+
+		$query = $wpdb->prepare(
+			"SELECT id, message FROM {$table} WHERE user_email = %s ORDER BY id ASC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$email_address,
+			$number,
+			$offset
+		);
+		$rows  = $wpdb->get_results( $query, ARRAY_A );
+
+		foreach ( $rows as $row ) {
+			$updated = $wpdb->update(
+				$table,
+				array(
+					'user_email'      => '',
+					'request_payload' => '{}',
+					'response_body'   => '',
+					'message'         => $this->redact_email_addresses( (string) $row['message'] ),
+				),
+				array( 'id' => intval( $row['id'] ) ),
+				array( '%s', '%s', '%s', '%s' ),
+				array( '%d' )
+			);
+
+			if ( false === $updated ) {
+				$items_retained = true;
+				$messages[]     = sprintf(
+					/* translators: %d: database log ID. */
+					__( 'A log record could not be anonymized (ID %d).', 'mc-woo-remote-automations' ),
+					intval( $row['id'] )
+				);
+				continue;
+			}
+
+			$items_removed = true;
+		}
+
+		return array(
+			'items_removed'  => $items_removed,
+			'items_retained' => $items_retained,
+			'messages'       => $messages,
+			'done'           => count( $rows ) < $number,
+		);
+	}
+
+	/**
+	 * Returns a friendly action label for exported log entries.
+	 *
+	 * @param string $action_key Action key stored in the log table.
+	 * @return string
+	 */
+	private function get_log_action_label( $action_key ) {
+		if ( 'create_user' === $action_key ) {
+			return __( 'Create user on remote site', 'mc-woo-remote-automations' );
+		}
+		if ( 'assign_role' === $action_key ) {
+			return __( 'Assign role on remote site', 'mc-woo-remote-automations' );
+		}
+
+		return $action_key;
+	}
+
+	/**
+	 * Redacts e-mail addresses from a free-text message.
+	 *
+	 * @param string $message Source log message.
+	 * @return string
+	 */
+	private function redact_email_addresses( $message ) {
+		return (string) preg_replace(
+			'/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i',
+			'[redacted-email]',
+			$message
 		);
 	}
 
