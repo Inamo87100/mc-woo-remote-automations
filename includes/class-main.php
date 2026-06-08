@@ -287,9 +287,15 @@ class MC_Woo_Remote_Main {
 	 * @return string
 	 */
 	private function redact_email_addresses( $message ) {
-		return (string) preg_replace(
-			'/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i',
-			'[redacted-email]',
+		return (string) preg_replace_callback(
+			'/[^\s<>()\[\]{}"\'`;,]+@[^\s<>()\[\]{}"\'`;,]+/u',
+			static function ( $matches ) {
+				$candidate = trim( $matches[0], " \t\n\r\0\x0B.,;:!?()[]{}<>\"'" );
+				if ( ! is_email( $candidate ) ) {
+					return $matches[0];
+				}
+				return str_replace( $candidate, '[redacted-email]', $matches[0] );
+			},
 			$message
 		);
 	}
