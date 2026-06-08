@@ -12,7 +12,7 @@
  * Domain Path:       /languages
  * Requires at least: 5.0
  * Requires PHP:      7.4
- * WC requires at least: 3.0
+ * WC requires at least: 4.0
  * WC tested up to:   9.0
  */
 
@@ -43,7 +43,6 @@ add_action(
 // Load includes.
 require_once MC_WOO_REMOTE_PATH . 'includes/functions.php';
 require_once MC_WOO_REMOTE_PATH . 'includes/class-helpers.php';
-require_once MC_WOO_REMOTE_PATH . 'includes/class-admin-banner.php';
 require_once MC_WOO_REMOTE_PATH . 'admin/class-admin.php';
 require_once MC_WOO_REMOTE_PATH . 'includes/class-remote-api.php';
 require_once MC_WOO_REMOTE_PATH . 'includes/class-main.php';

@@ -17,6 +17,9 @@ class MC_Woo_Remote_Helpers {
 	/** @var string Database table name (without prefix). */
 	const LOG_TABLE = 'mc_wra_logs';
 
+	/** @var int Maximum number of characters persisted for response body previews. */
+	const MAX_STORED_RESPONSE_LENGTH = 1000;
+
 	/**
 	 * Returns all known sensitive keys for payload redaction.
 	 *
@@ -152,11 +155,95 @@ class MC_Woo_Remote_Helpers {
 				'status'           => sanitize_text_field( $status ),
 				'response_code'    => is_null( $response_code ) ? null : intval( $response_code ),
 				'message'          => wp_kses_post( (string) $message ),
-				'request_payload'  => wp_json_encode( $request_payload ),
-				'response_body'    => (string) $response_body,
+				'request_payload'  => wp_json_encode( self::prepare_request_payload_for_storage( $request_payload ) ),
+				'response_body'    => self::prepare_response_body_for_storage( $response_body ),
 			),
 			array( '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s' )
 		);
+	}
+
+	/**
+	 * Keeps request payload logs useful while minimizing sensitive stored data.
+	 *
+	 * @param mixed $request_payload Request payload.
+	 * @return array
+	 */
+	private static function prepare_request_payload_for_storage( $request_payload ) {
+		if ( ! is_array( $request_payload ) ) {
+			return array();
+		}
+
+		$summary = array();
+
+		if ( isset( $request_payload['user_email'] ) ) {
+			$summary['user_email'] = sanitize_email( $request_payload['user_email'] );
+		}
+		if ( isset( $request_payload['email'] ) ) {
+			$summary['email'] = sanitize_email( $request_payload['email'] );
+		}
+		if ( isset( $request_payload['role'] ) ) {
+			$summary['role'] = sanitize_key( (string) $request_payload['role'] );
+		}
+
+		if ( isset( $request_payload['first_name'] ) || isset( $request_payload['last_name'] ) ) {
+			$summary['name_data'] = '[omitted]';
+		}
+
+		return self::redact_sensitive_data( $summary );
+	}
+
+	/**
+	 * Persists a redacted and size-limited response preview instead of full raw bodies.
+	 *
+	 * @param string $response_body Raw response body.
+	 * @return string
+	 */
+	private static function prepare_response_body_for_storage( $response_body ) {
+		$response_body = (string) $response_body;
+		if ( '' === $response_body ) {
+			return '';
+		}
+
+		$decoded = json_decode( $response_body, true );
+		if ( JSON_ERROR_NONE === json_last_error() && is_array( $decoded ) ) {
+			$summary_keys = array( 'success', 'code', 'message', 'error', 'errors' );
+			$summary      = array();
+			foreach ( $summary_keys as $key ) {
+				if ( array_key_exists( $key, $decoded ) ) {
+					$summary[ $key ] = $decoded[ $key ];
+				}
+			}
+
+			if ( empty( $summary ) ) {
+				$summary = $decoded;
+			}
+
+			$json = wp_json_encode(
+				self::redact_sensitive_data( $summary ),
+				JSON_UNESCAPED_SLASHES
+			);
+			return self::truncate_for_storage( (string) $json );
+		}
+
+		$stripped = wp_strip_all_tags( $response_body );
+		$redacted = self::redact_sensitive_data( (string) $stripped );
+
+		return self::truncate_for_storage( (string) $redacted );
+	}
+
+	/**
+	 * Truncates a string to a safe storage size.
+	 *
+	 * @param string $value Source value.
+	 * @return string
+	 */
+	private static function truncate_for_storage( $value ) {
+		$value = (string) $value;
+		if ( strlen( $value ) <= self::MAX_STORED_RESPONSE_LENGTH ) {
+			return $value;
+		}
+
+		return substr( $value, 0, self::MAX_STORED_RESPONSE_LENGTH ) . '…';
 	}
 
 	/**

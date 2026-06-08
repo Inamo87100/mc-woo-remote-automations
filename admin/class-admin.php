@@ -16,20 +16,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class MC_Woo_Remote_Admin {
 	/**
-	 * Default download URL for obtaining the companion MC Remote API package from monorepo releases.
-	 *
-	 * @var string
-	 */
-	const DEFAULT_MC_REMOTE_API_DOWNLOAD_URL = 'https://github.com/Inamo87100/mc-woo-remote-automations/releases/latest';
-
-	/**
-	 * Default setup guide URL for the companion MC Remote API plugin.
-	 *
-	 * @var string
-	 */
-	const DEFAULT_MC_REMOTE_API_SETUP_URL = 'https://github.com/Inamo87100/mc-woo-remote-automations/blob/main/mc-remote-api/docs/SETUP.md';
-
-	/**
 	 * Registers all admin hooks.
 	 */
 	public function __construct() {
@@ -179,10 +165,25 @@ class MC_Woo_Remote_Admin {
 				<th><label for="mc_remote_secret"><?php esc_html_e( 'Remote API Secret', 'mc-woo-remote-automations' ); ?></label></th>
 				<td>
 					<input type="password" class="regular-text" id="mc_remote_secret" name="mc_remote_secret" value="<?php echo esc_attr( $remote_secret ); ?>">
+					<button type="button" class="button" id="mc_remote_secret_toggle" style="margin-left:8px;"><?php esc_html_e( 'Show', 'mc-woo-remote-automations' ); ?></button>
 					<p class="description"><?php esc_html_e( 'Paste here the Remote API Secret generated on the destination site settings page.', 'mc-woo-remote-automations' ); ?></p>
 				</td>
 			</tr>
 		</table>
+		<script>
+		(function() {
+			var field = document.getElementById('mc_remote_secret');
+			var toggle = document.getElementById('mc_remote_secret_toggle');
+			if (!field || !toggle) {
+				return;
+			}
+			toggle.addEventListener('click', function() {
+				var show = field.type === 'password';
+				field.type = show ? 'text' : 'password';
+				toggle.textContent = show ? '<?php echo esc_js( __( 'Hide', 'mc-woo-remote-automations' ) ); ?>' : '<?php echo esc_js( __( 'Show', 'mc-woo-remote-automations' ) ); ?>';
+			});
+		}());
+		</script>
 		<?php
 	}
 
@@ -302,7 +303,21 @@ class MC_Woo_Remote_Admin {
 			return;
 		}
 
-		$this->save_connection_meta_from_request( $post_id );
+		$save_result = $this->save_connection_meta_from_request( $post_id );
+		if ( is_wp_error( $save_result ) ) {
+			add_filter(
+				'redirect_post_location',
+				function ( $location ) use ( $save_result ) {
+					return add_query_arg(
+						array(
+							'mc_wra_test' => '0',
+							'mc_wra_msg'  => rawurlencode( $save_result->get_error_message() ),
+						),
+						$location
+					);
+				}
+			);
+		}
 	}
 
 	/**
@@ -502,9 +517,15 @@ class MC_Woo_Remote_Admin {
 	 */
 	private function save_connection_meta_from_request( $post_id ) {
 		$enabled_value = sanitize_text_field( wp_unslash( $_POST['mc_enabled'] ?? $_POST['mc_connection_enabled'] ?? '' ) );
+		$base_url      = esc_url_raw( wp_unslash( $_POST['mc_base_url'] ?? '' ) );
+		$url_check     = mc_wra_validate_remote_base_url( $base_url );
+
+		if ( is_wp_error( $url_check ) ) {
+			return $url_check;
+		}
 
 		update_post_meta( $post_id, '_mc_enabled', in_array( $enabled_value, array( 'yes', '1', 'on' ), true ) ? 'yes' : 'no' );
-		update_post_meta( $post_id, '_mc_base_url', esc_url_raw( wp_unslash( $_POST['mc_base_url'] ?? '' ) ) );
+		update_post_meta( $post_id, '_mc_base_url', $base_url );
 		update_post_meta( $post_id, '_mc_create_endpoint', sanitize_text_field( wp_unslash( $_POST['mc_create_endpoint'] ?? '/wp-json/mc/v1/create-user' ) ) );
 		update_post_meta( $post_id, '_mc_role_endpoint', sanitize_text_field( wp_unslash( $_POST['mc_role_endpoint'] ?? '/wp-json/mc/v1/assign-role' ) ) );
 		update_post_meta( $post_id, '_mc_ping_endpoint', sanitize_text_field( wp_unslash( $_POST['mc_ping_endpoint'] ?? '/wp-json/mc/v1/ping' ) ) );
@@ -515,6 +536,8 @@ class MC_Woo_Remote_Admin {
 		// Backward compatibility with earlier versions.
 		update_post_meta( $post_id, '_mc_create_secret', $remote_secret );
 		update_post_meta( $post_id, '_mc_role_secret', $remote_secret );
+
+		return true;
 	}
 
 	/**
@@ -572,7 +595,15 @@ class MC_Woo_Remote_Admin {
 				);
 			}
 
-			$this->save_connection_meta_from_request( $post_id );
+			$save_result = $this->save_connection_meta_from_request( $post_id );
+			if ( is_wp_error( $save_result ) ) {
+				wp_send_json_error(
+					array(
+						'message' => $save_result->get_error_message(),
+					),
+					400
+				);
+			}
 
 			$result   = $this->get_connection_test_result( $post_id );
 			$edit_url = get_edit_post_link( $post_id, 'raw' );
@@ -625,11 +656,12 @@ class MC_Woo_Remote_Admin {
 		}
 		$timeout = intval( get_option( 'mc_wra_default_timeout', 10 ) );
 		$url     = mc_wra_build_url( $base_url, $ping_endpoint );
+		$url_check = mc_wra_validate_remote_base_url( $base_url );
 
-		if ( '' === trim( (string) $base_url ) || ! wp_http_validate_url( $url ) ) {
+		if ( is_wp_error( $url_check ) || ! wp_http_validate_url( $url ) ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Connection not tested: the Remote Site URL is empty or invalid.', 'mc-woo-remote-automations' ),
+				'message' => is_wp_error( $url_check ) ? $url_check->get_error_message() : __( 'Connection not tested: the Remote Site URL is empty or invalid.', 'mc-woo-remote-automations' ),
 			);
 		}
 
@@ -1102,13 +1134,14 @@ class MC_Woo_Remote_Admin {
 								<option value="remote" <?php selected( $mode, 'remote' ); ?>><?php esc_html_e( 'Remote API / Destination site', 'mc-woo-remote-automations' ); ?></option>
 								<option value="both" <?php selected( $mode, 'both' ); ?>><?php esc_html_e( 'Both', 'mc-woo-remote-automations' ); ?></option>
 							</select>
-							<p class="description"><?php esc_html_e( 'This setting is informational and helps administrators configure the plugin correctly on each site.', 'mc-woo-remote-automations' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Controller mode runs WooCommerce-triggered automations only. Remote mode exposes remote API endpoints only. Both enables both behaviors.', 'mc-woo-remote-automations' ); ?></p>
 						</td>
 					</tr>
 					<tr>
 						<th><label for="mc_wra_api_secret"><?php esc_html_e( 'Remote API Secret', 'mc-woo-remote-automations' ); ?></label></th>
 						<td>
-							<input type="text" class="regular-text" id="mc_wra_api_secret" name="mc_wra_api_secret" value="<?php echo esc_attr( $api_secret ); ?>">
+							<input type="password" class="regular-text" id="mc_wra_api_secret" name="mc_wra_api_secret" value="<?php echo esc_attr( $api_secret ); ?>">
+							<button type="button" class="button" id="mc_wra_api_secret_toggle" style="margin-left:8px;"><?php esc_html_e( 'Show', 'mc-woo-remote-automations' ); ?></button>
 							<p class="description"><?php esc_html_e( 'Copy this secret into the Connection settings on the Controller site. It is checked against the X-MC-SECRET request header.', 'mc-woo-remote-automations' ); ?></p>
 						</td>
 					</tr>
@@ -1138,6 +1171,20 @@ class MC_Woo_Remote_Admin {
 				<?php submit_button(); ?>
 			</form>
 		</div>
+		<script>
+		(function() {
+			var field = document.getElementById('mc_wra_api_secret');
+			var toggle = document.getElementById('mc_wra_api_secret_toggle');
+			if (!field || !toggle) {
+				return;
+			}
+			toggle.addEventListener('click', function() {
+				var show = field.type === 'password';
+				field.type = show ? 'text' : 'password';
+				toggle.textContent = show ? '<?php echo esc_js( __( 'Hide', 'mc-woo-remote-automations' ) ); ?>' : '<?php echo esc_js( __( 'Show', 'mc-woo-remote-automations' ) ); ?>';
+			});
+		}());
+		</script>
 		<?php
 	}
 }

@@ -23,11 +23,16 @@ class MC_Woo_Remote_Main {
 	public function __construct() {
 		register_activation_hook( MC_WOO_REMOTE_FILE, array( $this, 'activate' ) );
 		add_action( 'init', array( $this, 'register_post_types' ) );
-		add_action( 'woocommerce_order_status_changed', array( $this, 'handle_order_status_change' ), 10, 4 );
-
-		MC_Woo_Remote_Banner::init();
 		new MC_Woo_Remote_Admin();
-		new MC_Woo_Remote_API();
+		$mode = get_option( 'mc_wra_operating_mode', 'both' );
+
+		if ( in_array( $mode, array( 'controller', 'both' ), true ) ) {
+			add_action( 'woocommerce_order_status_changed', array( $this, 'handle_order_status_change' ), 10, 4 );
+		}
+
+		if ( in_array( $mode, array( 'remote', 'both' ), true ) ) {
+			new MC_Woo_Remote_API();
+		}
 	}
 
 	/**
@@ -89,6 +94,24 @@ class MC_Woo_Remote_Main {
 				'show_ui'     => true,
 				'show_in_menu' => false,
 				'supports'    => array( 'title' ),
+				'map_meta_cap' => true,
+				'capability_type' => array( 'mcwra_connection', 'mcwra_connections' ),
+				'capabilities' => array(
+					'edit_post'              => 'manage_options',
+					'read_post'              => 'manage_options',
+					'delete_post'            => 'manage_options',
+					'edit_posts'             => 'manage_options',
+					'edit_others_posts'      => 'manage_options',
+					'publish_posts'          => 'manage_options',
+					'read_private_posts'     => 'manage_options',
+					'delete_posts'           => 'manage_options',
+					'delete_private_posts'   => 'manage_options',
+					'delete_published_posts' => 'manage_options',
+					'delete_others_posts'    => 'manage_options',
+					'edit_private_posts'     => 'manage_options',
+					'edit_published_posts'   => 'manage_options',
+					'create_posts'           => 'manage_options',
+				),
 			)
 		);
 
@@ -114,6 +137,24 @@ class MC_Woo_Remote_Main {
 				'show_ui'     => true,
 				'show_in_menu' => false,
 				'supports'    => array( 'title' ),
+				'map_meta_cap' => true,
+				'capability_type' => array( 'mcwra_automation', 'mcwra_automations' ),
+				'capabilities' => array(
+					'edit_post'              => 'manage_options',
+					'read_post'              => 'manage_options',
+					'delete_post'            => 'manage_options',
+					'edit_posts'             => 'manage_options',
+					'edit_others_posts'      => 'manage_options',
+					'publish_posts'          => 'manage_options',
+					'read_private_posts'     => 'manage_options',
+					'delete_posts'           => 'manage_options',
+					'delete_private_posts'   => 'manage_options',
+					'delete_published_posts' => 'manage_options',
+					'delete_others_posts'    => 'manage_options',
+					'edit_private_posts'     => 'manage_options',
+					'edit_published_posts'   => 'manage_options',
+					'create_posts'           => 'manage_options',
+				),
 			)
 		);
 	}
@@ -140,7 +181,7 @@ class MC_Woo_Remote_Main {
 		$automations = get_posts(
 			array(
 				'post_type'      => 'mcwra_automation',
-				'post_status'    => array( 'publish', 'draft', 'private' ),
+				'post_status'    => 'publish',
 				'posts_per_page' => -1,
 				'meta_query'     => array(
 					array(
@@ -183,6 +224,11 @@ class MC_Woo_Remote_Main {
 			$role_endpoint   = get_post_meta( $connection_id, '_mc_role_endpoint', true ) ?: '/wp-json/mc/v1/assign-role';
 			$create_secret   = get_post_meta( $connection_id, '_mc_create_secret', true );
 			$role_secret     = get_post_meta( $connection_id, '_mc_role_secret', true );
+			$url_validation  = mc_wra_validate_remote_base_url( $base_url );
+
+			if ( is_wp_error( $url_validation ) ) {
+				continue;
+			}
 
 			$timeout = intval( get_post_meta( $automation->ID, '_mc_timeout', true ) );
 			if ( ! $timeout ) {
