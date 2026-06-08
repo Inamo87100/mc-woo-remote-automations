@@ -112,14 +112,14 @@ class MC_Woo_Remote_Main {
 		$offset        = ( $page - 1 ) * $number;
 		$data          = array();
 		$table         = MC_Woo_Remote_Helpers::get_log_table_name();
+		$expected_table = $wpdb->prefix . MC_Woo_Remote_Helpers::LOG_TABLE;
 
-		if ( '' === $table || '' === $email_address ) {
+		if ( '' === $table || '' === $email_address || $table !== $expected_table ) {
 			return array(
 				'data' => $data,
 				'done' => true,
 			);
 		}
-		$table = esc_sql( $table );
 
 		$query = $wpdb->prepare(
 			"SELECT id, created_at, action_key, status, response_code, message, order_id, request_payload, response_body FROM {$table} WHERE user_email = %s ORDER BY id ASC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -210,8 +210,9 @@ class MC_Woo_Remote_Main {
 		$items_retained = false;
 		$messages       = array();
 		$table          = MC_Woo_Remote_Helpers::get_log_table_name();
+		$expected_table = $wpdb->prefix . MC_Woo_Remote_Helpers::LOG_TABLE;
 
-		if ( '' === $table || '' === $email_address ) {
+		if ( '' === $table || '' === $email_address || $table !== $expected_table ) {
 			return array(
 				'items_removed'  => false,
 				'items_retained' => false,
@@ -219,7 +220,6 @@ class MC_Woo_Remote_Main {
 				'done'           => true,
 			);
 		}
-		$table = esc_sql( $table );
 
 		$query = $wpdb->prepare(
 			"SELECT id, message FROM {$table} WHERE user_email = %s ORDER BY id ASC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -321,7 +321,8 @@ class MC_Woo_Remote_Main {
 			message TEXT NULL,
 			request_payload LONGTEXT NULL,
 			response_body LONGTEXT NULL,
-			PRIMARY KEY (id)
+			PRIMARY KEY (id),
+			KEY user_email (user_email)
 		) {$charset};";
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
