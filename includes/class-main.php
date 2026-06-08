@@ -23,6 +23,7 @@ class MC_Woo_Remote_Main {
 	public function __construct() {
 		register_activation_hook( MC_WOO_REMOTE_FILE, array( $this, 'activate' ) );
 		add_action( 'init', array( $this, 'register_post_types' ) );
+		add_action( 'admin_init', array( $this, 'add_privacy_policy_content' ) );
 		new MC_Woo_Remote_Admin();
 		$mode = get_option( 'mc_wra_operating_mode', 'both' );
 
@@ -33,6 +34,33 @@ class MC_Woo_Remote_Main {
 		if ( in_array( $mode, array( 'remote', 'both' ), true ) ) {
 			new MC_Woo_Remote_API();
 		}
+	}
+
+	/**
+	 * Registers suggested privacy-policy content with the WordPress Privacy Policy Guide.
+	 *
+	 * Site administrators can copy this text into their privacy policy page.
+	 */
+	public function add_privacy_policy_content() {
+		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
+			return;
+		}
+
+		$content  = '<p>' . __( 'When a WooCommerce order reaches a configured status trigger, this plugin may transmit certain customer data to a remote WordPress site. The destination URL is entered by the site administrator in a Connection record — it is always a WordPress site the administrator owns and controls. No data is ever sent to the plugin developer or any third-party server.', 'mc-woo-remote-automations' ) . '</p>';
+		$content .= '<p><strong>' . __( 'Data that may be transmitted to the remote site:', 'mc-woo-remote-automations' ) . '</strong></p>';
+		$content .= '<ul>';
+		$content .= '<li>' . __( 'Customer billing e-mail address', 'mc-woo-remote-automations' ) . '</li>';
+		$content .= '<li>' . __( 'Customer billing first name and last name', 'mc-woo-remote-automations' ) . '</li>';
+		$content .= '<li>' . __( 'A WordPress role slug chosen by the administrator (for role-assignment actions)', 'mc-woo-remote-automations' ) . '</li>';
+		$content .= '</ul>';
+		$content .= '<p><strong>' . __( 'When data is transmitted:', 'mc-woo-remote-automations' ) . '</strong> ' . __( 'Only when an order transitions to the status configured in an active Automation rule and the order contains one of the configured products.', 'mc-woo-remote-automations' ) . '</p>';
+		$content .= '<p><strong>' . __( 'Local logging:', 'mc-woo-remote-automations' ) . '</strong> ' . __( 'Each API call writes a log record to a local database table. The record includes the customer e-mail address, the HTTP response code, and a redacted preview of the request/response payload. Logs can be reviewed and purged at any time from Woo Remote Automations → Logs.', 'mc-woo-remote-automations' ) . '</p>';
+		$content .= '<p>' . __( 'As the site administrator you are responsible for documenting this data transfer in your own privacy policy as required by applicable law (e.g. GDPR).', 'mc-woo-remote-automations' ) . '</p>';
+
+		wp_add_privacy_policy_content(
+			__( 'MC-Woo Remote Automations', 'mc-woo-remote-automations' ),
+			wp_kses_post( $content )
+		);
 	}
 
 	/**
