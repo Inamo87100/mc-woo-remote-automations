@@ -218,7 +218,7 @@ The plugin hooks into `woocommerce_order_status_changed`, which fires for both s
 
 = Is the plugin GDPR-compliant? =
 
-Customer e-mail addresses and names are transmitted to the remote site via the REST API. The plugin also stores execution logs for troubleshooting, and the Logs UI redacts sensitive values in payload previews. Configure a retention policy and document this transfer/processing in your privacy policy as required by your jurisdiction.
+Customer e-mail addresses and names are transmitted to the remote site via the REST API. The plugin also stores execution logs for troubleshooting, and the Logs UI redacts sensitive values in payload previews. Log records associated with an e-mail address can be included in WordPress personal data export requests and anonymized through WordPress personal data erasure requests. Configure a retention policy and document this transfer/processing in your privacy policy as required by your jurisdiction.
 
 = The automation fires but the user is not created — what should I check? =
 
@@ -255,12 +255,13 @@ All outbound HTTP requests made by this plugin go only to the remote WordPress s
 
 Data is sent exclusively to the remote WordPress site URL the administrator enters in each Connection record. That site is always a WordPress installation the administrator owns and controls. No data is routed through or stored on any server controlled by the plugin developer or any third party.
 
-The destination site must have this same plugin installed and set to Remote API mode. The site administrator is responsible for ensuring the transfer complies with applicable law (e.g. GDPR) and for documenting this processing in the site's privacy policy. A suggested privacy-policy text is provided automatically by this plugin under Settings → Privacy → Privacy Policy Guide.
+The destination site must have this same plugin installed and set to Remote API mode. The site administrator is responsible for ensuring the transfer complies with applicable law (e.g. GDPR) and for documenting this processing in the site's privacy policy. A suggested privacy-policy text is provided automatically by this plugin under Settings → Privacy → Privacy Policy Guide, and plugin log records tied to an e-mail address participate in WordPress privacy export/erasure workflows.
 
 == Changelog ==
 
 = 1.2.8 =
 * Added WordPress privacy policy integration: suggested privacy-policy text is now registered with the Privacy Policy Guide under Settings → Privacy.
+* Added WordPress personal data exporter and eraser integration for local plugin log entries associated with a requested e-mail address.
 * Strengthened External Services section in readme to explicitly state that no data is sent to developer-owned or third-party servers.
 * Removed unused admin banner class file that contained upsell copy.
 
