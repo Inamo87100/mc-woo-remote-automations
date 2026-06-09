@@ -18,7 +18,9 @@ if ( 'yes' !== $delete_all_data ) {
 global $wpdb;
 
 $table = $wpdb->prefix . 'mc_wra_logs';
-$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+if ( preg_match( '/^[A-Za-z0-9_]+$/', $table ) ) {
+	$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.SchemaChange
+}
 
 $post_ids = get_posts(
 	array(
