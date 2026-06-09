@@ -32,6 +32,42 @@ class MC_Woo_Remote_API {
 				'methods'             => WP_REST_Server::CREATABLE,
 				'permission_callback' => array( $this, 'permission_callback' ),
 				'callback'            => array( $this, 'create_user' ),
+				'args'                => array(
+					'user_email' => array(
+						'required'          => true,
+						'type'              => 'string',
+						'format'            => 'email',
+						'description'       => 'Customer email address.',
+						'sanitize_callback' => 'sanitize_email',
+						'validate_callback' => function ( $value ) {
+							return is_email( $value );
+						},
+					),
+					'first_name' => array(
+						'required'          => false,
+						'type'              => 'string',
+						'description'       => 'Customer first name.',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+					'last_name'  => array(
+						'required'          => false,
+						'type'              => 'string',
+						'description'       => 'Customer last name.',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+					'role'       => array(
+						'required'          => false,
+						'type'              => 'string',
+						'description'       => 'WordPress role slug to assign.',
+						'sanitize_callback' => 'sanitize_key',
+						'validate_callback' => function ( $value ) {
+							// Value already sanitized via sanitize_key() in sanitize_callback.
+							return '' === $value || wp_roles()->is_role( $value );
+						},
+					),
+				),
 			)
 		);
 
@@ -42,6 +78,28 @@ class MC_Woo_Remote_API {
 				'methods'             => WP_REST_Server::CREATABLE,
 				'permission_callback' => array( $this, 'permission_callback' ),
 				'callback'            => array( $this, 'assign_role' ),
+				'args'                => array(
+					'email' => array(
+						'required'          => true,
+						'type'              => 'string',
+						'format'            => 'email',
+						'description'       => 'Email address of the user to update.',
+						'sanitize_callback' => 'sanitize_email',
+						'validate_callback' => function ( $value ) {
+							return is_email( $value );
+						},
+					),
+					'role'  => array(
+						'required'          => true,
+						'type'              => 'string',
+						'description'       => 'WordPress role slug to assign.',
+						'sanitize_callback' => 'sanitize_key',
+						'validate_callback' => function ( $value ) {
+							// Value already sanitized via sanitize_key() in sanitize_callback.
+							return '' !== $value && wp_roles()->is_role( $value );
+						},
+					),
+				),
 			)
 		);
 
@@ -52,6 +110,7 @@ class MC_Woo_Remote_API {
 				'methods'             => WP_REST_Server::READABLE,
 				'permission_callback' => array( $this, 'permission_callback' ),
 				'callback'            => array( $this, 'ping' ),
+				'args'                => array(),
 			)
 		);
 	}

@@ -21,6 +21,7 @@ class MC_Woo_Remote_Admin {
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
 		add_action( 'save_post_mcwra_connection', array( $this, 'save_connection' ), 10, 2 );
 		add_action( 'save_post_mcwra_automation', array( $this, 'save_automation' ), 10, 2 );
@@ -116,6 +117,55 @@ class MC_Woo_Remote_Admin {
 	}
 
 	/**
+	 * Enqueues admin-only JavaScript on relevant plugin screens.
+	 *
+	 * Targets: the Connection edit/create screen and the plugin Settings page.
+	 * i18n strings are passed via wp_localize_script to avoid inline script.
+	 *
+	 * @param string $hook Current admin page hook suffix.
+	 */
+	public function enqueue_admin_scripts( $hook ) {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		$load = false;
+
+		// Connection create/edit screens.
+		if ( $screen && 'mcwra_connection' === $screen->post_type ) {
+			$load = true;
+		}
+
+		// Settings submenu page (hook suffix contains the page slug).
+		if ( ! $load && false !== strpos( $hook, 'mc-wra-settings' ) ) {
+			$load = true;
+		}
+
+		if ( ! $load ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'mc-wra-admin',
+			MC_WOO_REMOTE_URL . 'assets/js/mc-wra-admin.js',
+			array(),
+			MC_WOO_REMOTE_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'mc-wra-admin',
+			'mcWraAdminI18n',
+			array(
+				'show'               => __( 'Show', 'mc-woo-remote-automations' ),
+				'hide'               => __( 'Hide', 'mc-woo-remote-automations' ),
+				'saving'             => __( 'Saving and testing connection...', 'mc-woo-remote-automations' ),
+				'invalidResponse'    => __( 'The server returned an invalid response.', 'mc-woo-remote-automations' ),
+				'unexpectedResponse' => __( 'Unexpected response from WordPress.', 'mc-woo-remote-automations' ),
+				'networkError'       => __( 'Connection test failed due to a browser or server error.', 'mc-woo-remote-automations' ),
+			)
+		);
+	}
+
+	/**
 	 * Registers meta boxes for Connection and Automation post types.
 	 */
 	public function add_meta_boxes() {
@@ -165,25 +215,11 @@ class MC_Woo_Remote_Admin {
 				<th><label for="mc_remote_secret"><?php esc_html_e( 'Remote API Secret', 'mc-woo-remote-automations' ); ?></label></th>
 				<td>
 					<input type="password" class="regular-text" id="mc_remote_secret" name="mc_remote_secret" value="<?php echo esc_attr( $remote_secret ); ?>">
-					<button type="button" class="button" id="mc_remote_secret_toggle" style="margin-left:8px;"><?php esc_html_e( 'Show', 'mc-woo-remote-automations' ); ?></button>
+					<button type="button" class="button" id="mc_remote_secret_toggle" data-mc-wra-toggle="mc_remote_secret" style="margin-left:8px;"><?php esc_html_e( 'Show', 'mc-woo-remote-automations' ); ?></button>
 					<p class="description"><?php esc_html_e( 'Paste here the Remote API Secret generated on the destination site settings page.', 'mc-woo-remote-automations' ); ?></p>
 				</td>
 			</tr>
 		</table>
-		<script>
-		(function() {
-			var field = document.getElementById('mc_remote_secret');
-			var toggle = document.getElementById('mc_remote_secret_toggle');
-			if (!field || !toggle) {
-				return;
-			}
-			toggle.addEventListener('click', function() {
-				var show = field.type === 'password';
-				field.type = show ? 'text' : 'password';
-				toggle.textContent = show ? '<?php echo esc_js( __( 'Hide', 'mc-woo-remote-automations' ) ); ?>' : '<?php echo esc_js( __( 'Show', 'mc-woo-remote-automations' ) ); ?>';
-			});
-		}());
-		</script>
 		<?php
 	}
 
@@ -402,7 +438,9 @@ class MC_Woo_Remote_Admin {
 			</p>
 
 			<p>
-				<button type="button" class="button button-primary button-large" id="mc-wra-save-test-button">
+				<button type="button" class="button button-primary button-large" id="mc-wra-save-test-button"
+					data-nonce="<?php echo esc_attr( $nonce ); ?>"
+					data-post-id="<?php echo esc_attr( $post->ID ); ?>">
 					<?php echo esc_html( $button_text ); ?>
 				</button>
 				<span class="spinner" id="mc-wra-save-test-spinner" style="float:none;margin-top:0;"></span>
@@ -414,97 +452,6 @@ class MC_Woo_Remote_Admin {
 				<?php esc_html_e( 'The standard WordPress Publish/Update box is hidden on this screen to avoid confusion.', 'mc-woo-remote-automations' ); ?>
 			</p>
 		</div>
-
-		<script>
-		(function() {
-			var button = document.getElementById('mc-wra-save-test-button');
-			var spinner = document.getElementById('mc-wra-save-test-spinner');
-			var resultBox = document.getElementById('mc-wra-save-test-result');
-
-			if (!button || !resultBox) {
-				return;
-			}
-
-			function getValue(id) {
-				var el = document.getElementById(id);
-				return el ? el.value : '';
-			}
-
-			function isChecked(id) {
-				var el = document.getElementById(id);
-				return el && el.checked ? 'yes' : 'no';
-			}
-
-			function showMessage(success, message) {
-				resultBox.style.display = 'block';
-				resultBox.className = success ? 'notice notice-success inline' : 'notice notice-error inline';
-				resultBox.innerHTML = '<p>' + String(message || '').replace(/[&<>"']/g, function(m) {
-					return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m];
-				}) + '</p>';
-			}
-
-			button.addEventListener('click', function(e) {
-				e.preventDefault();
-
-				button.disabled = true;
-				if (spinner) {
-					spinner.classList.add('is-active');
-				}
-				showMessage(true, '<?php echo esc_js( __( 'Saving and testing connection...', 'mc-woo-remote-automations' ) ); ?>');
-
-				var data = new FormData();
-				data.append('action', 'mc_wra_save_test_connection');
-				data.append('nonce', '<?php echo esc_js( $nonce ); ?>');
-				data.append('post_id', '<?php echo esc_js( (string) $post->ID ); ?>');
-				data.append('post_title', getValue('title'));
-				data.append('mc_enabled', isChecked('mc_enabled') === 'yes' ? 'yes' : isChecked('mc_connection_enabled'));
-				data.append('mc_base_url', getValue('mc_base_url'));
-				data.append('mc_create_endpoint', getValue('mc_create_endpoint'));
-				data.append('mc_role_endpoint', getValue('mc_role_endpoint'));
-				data.append('mc_ping_endpoint', getValue('mc_ping_endpoint'));
-				data.append('mc_remote_secret', getValue('mc_remote_secret'));
-
-				fetch(ajaxurl, {
-					method: 'POST',
-					credentials: 'same-origin',
-					body: data
-				})
-				.then(function(response) {
-					return response.text().then(function(text) {
-						try {
-							return JSON.parse(text);
-						} catch (e) {
-							return {
-								success: false,
-								data: {
-									message: text ? text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '<?php echo esc_js( __( 'The server returned an invalid response.', 'mc-woo-remote-automations' ) ); ?>'
-								}
-							};
-						}
-					});
-				})
-				.then(function(payload) {
-					var ok = payload && payload.success;
-					var message = payload && payload.data && payload.data.message ? payload.data.message : '<?php echo esc_js( __( 'Unexpected response from WordPress.', 'mc-woo-remote-automations' ) ); ?>';
-
-					showMessage(ok, message);
-
-					if (payload && payload.data && payload.data.edit_url && window.history && window.history.replaceState) {
-						window.history.replaceState({}, document.title, payload.data.edit_url);
-					}
-				})
-				.catch(function(error) {
-					showMessage(false, error && error.message ? error.message : '<?php echo esc_js( __( 'Connection test failed due to a browser or server error.', 'mc-woo-remote-automations' ) ); ?>');
-				})
-				.finally(function() {
-					button.disabled = false;
-					if (spinner) {
-						spinner.classList.remove('is-active');
-					}
-				});
-			});
-		}());
-		</script>
 		<?php
 	}
 
@@ -850,9 +797,20 @@ class MC_Woo_Remote_Admin {
 			$product_ids = get_post_meta( $post_id, '_mc_product_ids', true );
 			echo is_array( $product_ids ) ? esc_html( count( $product_ids ) ) : '0';
 		} elseif ( 'mc_last_run' === $column ) {
-			$table = $wpdb->prefix . MC_Woo_Remote_Helpers::LOG_TABLE;
-			$last  = $wpdb->get_var( $wpdb->prepare( "SELECT created_at FROM {$table} WHERE automation_id = %d ORDER BY id DESC LIMIT 1", $post_id ) );
-			echo $last ? esc_html( $last ) : '&mdash;';
+			$table = MC_Woo_Remote_Helpers::get_log_table_name();
+			if ( '' !== $table ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				$last = $wpdb->get_var(
+					$wpdb->prepare(
+						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+						"SELECT created_at FROM {$table} WHERE automation_id = %d ORDER BY id DESC LIMIT 1",
+						$post_id
+					)
+				);
+				echo $last ? esc_html( $last ) : '&mdash;';
+			} else {
+				echo '&mdash;';
+			}
 		}
 	}
 
@@ -929,15 +887,18 @@ class MC_Woo_Remote_Admin {
 			$where_sql = ' WHERE ' . implode( ' AND ', $where );
 		}
 
-		$count_sql = "SELECT COUNT(*) FROM {$table}{$where_sql}";
-		$total     = intval( $wpdb->get_var( $count_sql ) );
+		$count_sql = "SELECT COUNT(*) FROM {$table}{$where_sql}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$total = intval( $wpdb->get_var( $count_sql ) );
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$query = $wpdb->prepare(
 			"SELECT id, created_at, automation_id, connection_id, order_id, action_key, user_email, status, response_code, message, request_payload, response_body FROM {$table}{$where_sql} ORDER BY id DESC LIMIT %d OFFSET %d",
 			$per_page,
 			$offset
 		);
-		$logs = $wpdb->get_results( $query, ARRAY_A );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$logs        = $wpdb->get_results( $query, ARRAY_A );
 		$total_pages = max( 1, (int) ceil( $total / $per_page ) );
 		$retention = intval( get_option( 'mc_wra_log_retention_days', 90 ) );
 		?>
@@ -1141,7 +1102,7 @@ class MC_Woo_Remote_Admin {
 						<th><label for="mc_wra_api_secret"><?php esc_html_e( 'Remote API Secret', 'mc-woo-remote-automations' ); ?></label></th>
 						<td>
 							<input type="password" class="regular-text" id="mc_wra_api_secret" name="mc_wra_api_secret" value="<?php echo esc_attr( $api_secret ); ?>">
-							<button type="button" class="button" id="mc_wra_api_secret_toggle" style="margin-left:8px;"><?php esc_html_e( 'Show', 'mc-woo-remote-automations' ); ?></button>
+							<button type="button" class="button" id="mc_wra_api_secret_toggle" data-mc-wra-toggle="mc_wra_api_secret" style="margin-left:8px;"><?php esc_html_e( 'Show', 'mc-woo-remote-automations' ); ?></button>
 							<p class="description"><?php esc_html_e( 'Copy this secret into the Connection settings on the Controller site. It is checked against the X-MC-SECRET request header.', 'mc-woo-remote-automations' ); ?></p>
 						</td>
 					</tr>
@@ -1171,20 +1132,6 @@ class MC_Woo_Remote_Admin {
 				<?php submit_button(); ?>
 			</form>
 		</div>
-		<script>
-		(function() {
-			var field = document.getElementById('mc_wra_api_secret');
-			var toggle = document.getElementById('mc_wra_api_secret_toggle');
-			if (!field || !toggle) {
-				return;
-			}
-			toggle.addEventListener('click', function() {
-				var show = field.type === 'password';
-				field.type = show ? 'text' : 'password';
-				toggle.textContent = show ? '<?php echo esc_js( __( 'Hide', 'mc-woo-remote-automations' ) ); ?>' : '<?php echo esc_js( __( 'Show', 'mc-woo-remote-automations' ) ); ?>';
-			});
-		}());
-		</script>
 		<?php
 	}
 }
